@@ -134,12 +134,15 @@ Ext.define('MAGAJOWeb.Application', {
             });
         } else {
             var cont = Ext.getCmp(bind);
+            console.log(cont);
+            cont.removeAll(true);
+            cont.updateLayout();
             cont.add(itemComp);
         }
     },
 
     onCreateComponent: function(comp) {
-        console.log("inicio");
+        //console.log("inicio");
         var currentThis = this;
 
         var extComponent = {
@@ -178,10 +181,10 @@ Ext.define('MAGAJOWeb.Application', {
         for (var b in comp.Components) {
             //console.log(comp.Components[b]);
             var type = comp.Components[b].type;
-            console.log(type);
+            //console.log(type);
             var componente = comp.Components[b].items;
-            console.log("componente");
-            console.log(componente);
+            /*console.log("componente");
+            console.log(componente);*/
 
             if (type != undefined) {
                 extComponent[type] = [];
@@ -189,12 +192,12 @@ Ext.define('MAGAJOWeb.Application', {
                 extComponent.items = [];
             }
 
-            console.log(extComponent);
+            //console.log(extComponent);
             
             for (var c in componente) {
                 var extCreateComponente = componente[c];
                 var itemComp = this.onCreateComponent(extCreateComponente);
-                console.log(type);
+                //console.log(type);
                 if (type != undefined) {
                     extComponent[type].push(itemComp);
                 } else {
@@ -214,7 +217,7 @@ Ext.define('MAGAJOWeb.Application', {
             for (var b in cmpEvent.behaviours) {
                 var event = [];
                 var fun = "MAGAJOWeb.app." + cmpEvent.behaviours[b].behaviourId + "(this, parametros)";
-                console.log(Ext.get(currentThis.getId().toString()));
+                //console.log(Ext.get(currentThis.getId().toString()));
                 event[cmpEvent.eventName] = function() {
                     var parametros = [];
 
