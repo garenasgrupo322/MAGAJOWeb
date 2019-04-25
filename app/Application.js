@@ -4,7 +4,7 @@
  * initialization details.
  */
 
-var APIURL = "http://localhost:5000/Api/";
+var APIURL = "https://localhost:5001/Api/";
 var GETID = 'Auth/GetId';
 var LOGINVIEW = 'Auth/ViewLogin';
 var LOGINPOST = 'Auth/Login';
@@ -139,6 +139,7 @@ Ext.define('MAGAJOWeb.Application', {
     },
 
     onCreateComponent: function(comp) {
+        console.log("inicio");
         var currentThis = this;
 
         var extComponent = {
@@ -147,18 +148,59 @@ Ext.define('MAGAJOWeb.Application', {
         };
 
         for (var b in comp.attributes) {
-            if ((comp.attributes[b].attributeValue == "true") || (comp.attributes[b].attributeValue == "false"))
+            if ((comp.attributes[b].attributeValue == "true") || (comp.attributes[b].attributeValue == "false")
+                || (comp.attributes[b].attributeValue == "True") || (comp.attributes[b].attributeValue == "False")
+                || (comp.attributes[b].attributeValue == "FALSE") || (comp.attributes[b].attributeValue == "FALSE")) {
+                comp.attributes[b].attributeValue = comp.attributes[b].attributeValue.toLowerCase();
                 extComponent[comp.attributes[b].attributeName] = (comp.attributes[b].attributeValue === "true");
-            else
+            } else {
                 extComponent[comp.attributes[b].attributeName] = comp.attributes[b].attributeValue;
+            }
         }
 
-        if (comp.Components)
-            extComponent.items = [];
+        /*if (comp.Components)
+            extComponent.items = [];*/
+
+            
+        /*for (var b in comp.Components) {
+            var type = comp.Components[b].type;
+            console.log(type);
+            console.log(comp.Components[b][comp.Components[b].type]);
+            var itemComp = this.onCreateComponent(comp.Components[b][comp.Components[b].type]);
+            if (comp.type != undefined) {
+                console.log
+                extComponent[comp.Components[b].type].push(itemComp);
+            } else {
+                extComponent.items.push(itemComp);
+            }
+        }*/
 
         for (var b in comp.Components) {
-            var itemComp = this.onCreateComponent(comp.Components[b]);
-            extComponent.items.push(itemComp);
+            //console.log(comp.Components[b]);
+            var type = comp.Components[b].type;
+            console.log(type);
+            var componente = comp.Components[b].items;
+            console.log("componente");
+            console.log(componente);
+
+            if (type != undefined) {
+                extComponent[type] = [];
+            } else {
+                extComponent.items = [];
+            }
+
+            console.log(extComponent);
+            
+            for (var c in componente) {
+                var extCreateComponente = componente[c];
+                var itemComp = this.onCreateComponent(extCreateComponente);
+                console.log(type);
+                if (type != undefined) {
+                    extComponent[type].push(itemComp);
+                } else {
+                    extComponent.items.push(itemComp);
+                }
+            }
         }
 
         if (comp.events) {
@@ -193,7 +235,6 @@ Ext.define('MAGAJOWeb.Application', {
 
     onIniciaSesion: function(obj, parametros) {
         var currentThis = this;
-        
 
         var form = obj.ownerCt.ownerCt.getForm();
 
