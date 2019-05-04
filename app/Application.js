@@ -64,7 +64,6 @@ Ext.define('MAGAJOWeb.Application', {
                 success: function(response, opts) {
                     var obj = Ext.decode(response.responseText);
                     localStorage.setItem("AppID", obj.id);
-                    console.log('onGetIdApp')
                     currentThis.onGetViewLogin();
                 },
 
@@ -121,7 +120,7 @@ Ext.define('MAGAJOWeb.Application', {
         }
 
 
-        console.log(itemComp);
+        //console.log(itemComp);
 
         if (bind == null) {
             this.currentView = Ext.create('Ext.panel.Panel', {
@@ -142,7 +141,6 @@ Ext.define('MAGAJOWeb.Application', {
     },
 
     onCreateComponent: function(comp) {
-        //console.log("inicio");
         var currentThis = this;
 
         var extComponent = {
@@ -151,9 +149,9 @@ Ext.define('MAGAJOWeb.Application', {
         };
 
         for (var b in comp.attributes) {
-            if ((comp.attributes[b].attributeValue == "true") || (comp.attributes[b].attributeValue == "false")
-                || (comp.attributes[b].attributeValue == "True") || (comp.attributes[b].attributeValue == "False")
-                || (comp.attributes[b].attributeValue == "FALSE") || (comp.attributes[b].attributeValue == "FALSE")) {
+            if ((comp.attributes[b].attributeValue == "true") || (comp.attributes[b].attributeValue == "false") ||
+                (comp.attributes[b].attributeValue == "True") || (comp.attributes[b].attributeValue == "False") ||
+                (comp.attributes[b].attributeValue == "FALSE") || (comp.attributes[b].attributeValue == "FALSE")) {
                 comp.attributes[b].attributeValue = comp.attributes[b].attributeValue.toLowerCase();
                 extComponent[comp.attributes[b].attributeName] = (comp.attributes[b].attributeValue === "true");
             } else {
@@ -161,30 +159,9 @@ Ext.define('MAGAJOWeb.Application', {
             }
         }
 
-        /*if (comp.Components)
-            extComponent.items = [];*/
-
-            
-        /*for (var b in comp.Components) {
-            var type = comp.Components[b].type;
-            console.log(type);
-            console.log(comp.Components[b][comp.Components[b].type]);
-            var itemComp = this.onCreateComponent(comp.Components[b][comp.Components[b].type]);
-            if (comp.type != undefined) {
-                console.log
-                extComponent[comp.Components[b].type].push(itemComp);
-            } else {
-                extComponent.items.push(itemComp);
-            }
-        }*/
-
         for (var b in comp.Components) {
-            //console.log(comp.Components[b]);
             var type = comp.Components[b].type;
-            //console.log(type);
             var componente = comp.Components[b].items;
-            /*console.log("componente");
-            console.log(componente);*/
 
             if (type != undefined) {
                 extComponent[type] = [];
@@ -192,12 +169,9 @@ Ext.define('MAGAJOWeb.Application', {
                 extComponent.items = [];
             }
 
-            //console.log(extComponent);
-            
             for (var c in componente) {
                 var extCreateComponente = componente[c];
                 var itemComp = this.onCreateComponent(extCreateComponente);
-                //console.log(type);
                 if (type != undefined) {
                     extComponent[type].push(itemComp);
                 } else {
@@ -217,7 +191,6 @@ Ext.define('MAGAJOWeb.Application', {
             for (var b in cmpEvent.behaviours) {
                 var event = [];
                 var fun = "MAGAJOWeb.app." + cmpEvent.behaviours[b].behaviourId + "(this, parametros)";
-                //console.log(Ext.get(currentThis.getId().toString()));
                 event[cmpEvent.eventName] = function() {
                     var parametros = [];
 
@@ -292,5 +265,47 @@ Ext.define('MAGAJOWeb.Application', {
         var appId = localStorage.getItem("AppID");
         var apiUrl = APIURL + 'Views/' + appId + '/view/' + parametros.Vista;
         this.onGetAjaxView(apiUrl, 'GET', null, parametros.Container);
+    },
+
+    onCerrarSesion: function(obj, parametros) {
+        localStorage.setItem("AppID", null);
+        localStorage.setItem("AppID", null);
+        localStorage.setItem("AppID", null);
+    },
+
+    onDialogoVista: function(obj, parametros) {
+        var currentThis = this;
+
+        Ext.Ajax.request({
+            url: url,
+            method: method,
+            jsonData: data,
+            success: function(response, opts) {
+                var obj = Ext.decode(response.responseText);
+
+                if (obj.success) {
+                    var itemComp = [];
+
+                    for (var b in obj.Components) {
+                        itemComp.push(this.onCreateComponent(obj.Components[b]));
+                    }
+
+                    Ext.create('Ext.window.Window', {
+                        title: 'Hello',
+                        layout: 'fit',
+                        autoDestroy : true,
+                        items: itemComp
+                    }).show();
+                } else {
+                    Ext.MessageBox.alert('Error', obj.message);
+                }
+            },
+
+            failure: function(response, opts) {
+                window.alert("Error");
+            }
+        });
+
     }
+
 });
