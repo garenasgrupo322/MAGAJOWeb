@@ -9,6 +9,7 @@ var GETID = 'Auth/GetId';
 var LOGINVIEW = 'Auth/ViewLogin';
 var LOGINPOST = 'Auth/Login';
 var HOMEVIEW = 'Menu/ViewMenu';
+var DATACATALOGS = 'Catalog/GetData';
 var MESSAGEERROR = 'Ocurrio un error por favor notifiquelo al administrador';
 
 var body = document.body,
@@ -120,7 +121,7 @@ Ext.define('MAGAJOWeb.Application', {
         }
 
 
-        //console.log(itemComp);
+        console.log(itemComp);
 
         if (bind == null) {
             this.currentView = Ext.create('Ext.panel.Panel', {
@@ -147,6 +148,10 @@ Ext.define('MAGAJOWeb.Application', {
             id: comp.componentId,
             xtype: comp.componentType
         };
+
+        if (comp.mapping) {
+            extComponent.dataIndex = comp.mapping.field;
+        }
 
         for (var b in comp.attributes) {
             if ((comp.attributes[b].attributeValue == "true") || (comp.attributes[b].attributeValue == "false") ||
@@ -187,26 +192,73 @@ Ext.define('MAGAJOWeb.Application', {
         }
 
         for (var b in comp.events) {
+
             var cmpEvent = comp.events[b];
+
             for (var b in cmpEvent.behaviours) {
-                var event = [];
-                var fun = "MAGAJOWeb.app." + cmpEvent.behaviours[b].behaviourId + "(this, parametros)";
-                event[cmpEvent.eventName] = function() {
-                    var parametros = [];
+                if (cmpEvent.eventName != "create") {
+                    console.log(cmpEvent.eventName);
+                    var event = [];
+                    var fun = "MAGAJOWeb.app." + cmpEvent.behaviours[b].behaviourId + "(this, parametros)";
+                    console.log(fun);
+                    event[cmpEvent.eventName] = function() {
+                        console.log("entra");
+                        var parametros = [];
 
-                    for (var c in cmpEvent.behaviours[b].parameters) {
-                        var param = cmpEvent.behaviours[b].parameters[c];
+                        for (var c in cmpEvent.behaviours[b].parameters) {
+                            var param = cmpEvent.behaviours[b].parameters[c];
 
-                        parametros[param.parameterName] = param.parameterValue;
+                            parametros[param.parameterName] = param.parameterValue;
+                        }
+
+                        eval(fun);
                     }
-
-                    eval(fun);
+                    extComponent.listeners.push(event);
                 }
-                extComponent.listeners.push(event);
             }
         }
 
+        if (comp.listOfValues) {
+            this.onListOfValuesAjax(extComponent, comp);
+            extComponent.store = Ext.data.StoreManager.lookup(comp.listOfValues.entity);
+        }
+
         return extComponent;
+    },
+
+    onListOfValuesAjax: function(extCmp, dataCmp) {
+        var apiUrl = APIURL + DATACATALOGS;
+
+        var dataParametros = {
+            IEntityID: dataCmp.listOfValues.entity,
+            Itoken: localStorage.getItem("UserToken"),
+            FilterData: null,
+            SortData: null,
+            QueryLimits: null,
+            ColumnData: null,
+            MGJAPP_ID: localStorage.getItem("AppID")
+        }
+
+        Ext.Ajax.request({
+            url: apiUrl,
+            async: false,
+            method: 'POST',
+            jsonData: dataParametros,
+            success: function(response, opts) {
+                var obj = Ext.decode(response.responseText);
+
+                Ext.create('Ext.data.Store', {
+                    storeId: dataCmp.listOfValues.entity,
+                    autoLoad: true,
+                    fields: obj.model,
+                    data: obj.data.data
+                });
+
+            },
+            failure: function(response, opts) {
+                Ext.MessageBox.alert('Error', MESSAGEERROR);
+            }
+        });
     },
 
     onIniciaSesion: function(obj, parametros) {
@@ -274,6 +326,7 @@ Ext.define('MAGAJOWeb.Application', {
     },
 
     onDialogoVista: function(obj, parametros) {
+        console.log('onDialogoVista');
         var currentThis = this;
 
         Ext.Ajax.request({
@@ -293,7 +346,7 @@ Ext.define('MAGAJOWeb.Application', {
                     Ext.create('Ext.window.Window', {
                         title: 'Hello',
                         layout: 'fit',
-                        autoDestroy : true,
+                        autoDestroy: true,
                         items: itemComp
                     }).show();
                 } else {
