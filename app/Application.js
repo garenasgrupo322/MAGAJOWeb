@@ -321,8 +321,9 @@ Ext.define('MAGAJOWeb.Application', {
 
     onCerrarSesion: function(obj, parametros) {
         localStorage.setItem("AppID", null);
-        localStorage.setItem("AppID", null);
-        localStorage.setItem("AppID", null);
+        localStorage.setItem("UserToken", null);
+        localStorage.setItem("LoggedIn", false);
+        this.onGetIdApp();
     },
 
     onDialogoVista: function(obj, parametros) {
