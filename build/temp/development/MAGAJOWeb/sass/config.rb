@@ -1,1 +1,1 @@
-cache_path = '/Users/garenas/Documents/Developer/cube2/MAGAJOWeb/build/.sass-cache'
+cache_path = 'C:\developer\cube2\MAGAJOWeb/build/.sass-cache'

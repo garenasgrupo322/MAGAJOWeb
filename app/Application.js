@@ -4,13 +4,14 @@
  * initialization details.
  */
 
-var APIURL = "https://localhost:5001/Api/";
+var APIURL = "https://localhost:44332/Api/";
 var GETID = 'Auth/GetId';
 var LOGINVIEW = 'Auth/ViewLogin';
 var LOGINPOST = 'Auth/Login';
 var HOMEVIEW = 'Menu/ViewMenu';
 var DATACATALOGS = 'Catalog/GetData';
 var MESSAGEERROR = 'Ocurrio un error por favor notifiquelo al administrador';
+var GETVIEWS = APIURL + "Views/{0}/view/{1}";
 
 var body = document.body,
     html = document.documentElement;
@@ -52,17 +53,24 @@ Ext.define('MAGAJOWeb.Application', {
     },
 
     onGetIdApp: function() {
+        console.log("onGetIdApp");
+
         var loggedIn;
         var appId;
         var currentThis = this;
         loggedIn = localStorage.getItem("LoggedIn");
 
-        if (!loggedIn) {
+        console.log(loggedIn);
+        if (!(loggedIn == 'true')) {
+            console.log("onGetIdApp3");
+            console.log(APIURL + GETID);
+
             Ext.Ajax.request({
                 url: APIURL + GETID,
                 method: 'POST',
                 params: location.href,
                 success: function(response, opts) {
+                    console.log("onGetIdApp ajax");
                     var obj = Ext.decode(response.responseText);
                     localStorage.setItem("AppID", obj.id);
                     currentThis.onGetViewLogin();
@@ -73,6 +81,8 @@ Ext.define('MAGAJOWeb.Application', {
                 }
             });
         } else {
+            console.log("onGetIdApp2");
+
             this.onCreateHome();
         }
     },
@@ -195,24 +205,27 @@ Ext.define('MAGAJOWeb.Application', {
 
             var cmpEvent = comp.events[b];
 
-            for (var b in cmpEvent.behaviours) {
+            for (var c in cmpEvent.behaviours) {
+                
                 if (cmpEvent.eventName != "create") {
-                    console.log(cmpEvent.eventName);
+                    var evetBehaviors = cmpEvent.behaviours[c];
+
                     var event = [];
-                    var fun = "MAGAJOWeb.app." + cmpEvent.behaviours[b].behaviourId + "(this, parametros)";
-                    console.log(fun);
                     event[cmpEvent.eventName] = function() {
-                        console.log("entra");
                         var parametros = [];
 
-                        for (var c in cmpEvent.behaviours[b].parameters) {
-                            var param = cmpEvent.behaviours[b].parameters[c];
-
+                        for (var d in evetBehaviors.parameters) {
+                            var param = evetBehaviors.parameters[d];
+                            console.log(param);
                             parametros[param.parameterName] = param.parameterValue;
                         }
 
+                        var fun = "MAGAJOWeb.app." + evetBehaviors.behaviourId + "(this, parametros)";
+                        console.log(fun);
+
                         eval(fun);
                     }
+
                     extComponent.listeners.push(event);
                 }
             }
@@ -314,6 +327,8 @@ Ext.define('MAGAJOWeb.Application', {
     },
 
     onCargarVista: function(obj, parametros) {
+        console.log("onCargarVista");
+        console.log(parametros);
         var appId = localStorage.getItem("AppID");
         var apiUrl = APIURL + 'Views/' + appId + '/view/' + parametros.Vista;
         this.onGetAjaxView(apiUrl, 'GET', null, parametros.Container);
@@ -327,25 +342,31 @@ Ext.define('MAGAJOWeb.Application', {
     },
 
     onDialogoVista: function(obj, parametros) {
-        console.log('onDialogoVista');
         var currentThis = this;
+        var appId = localStorage.getItem("AppID");
+
+        var url = GETVIEWS.replace("{0}", appId);
+        url = url.replace("{1}", parametros.Vista);
+        
+        console.log(url);
 
         Ext.Ajax.request({
             url: url,
-            method: method,
-            jsonData: data,
+            method: 'GET',
             success: function(response, opts) {
                 var obj = Ext.decode(response.responseText);
+
+                console.log(obj);
 
                 if (obj.success) {
                     var itemComp = [];
 
                     for (var b in obj.Components) {
-                        itemComp.push(this.onCreateComponent(obj.Components[b]));
+                        itemComp.push(currentThis.onCreateComponent(obj.Components[b]));
                     }
 
                     Ext.create('Ext.window.Window', {
-                        title: 'Hello',
+                        title: obj.ViewName,
                         layout: 'fit',
                         autoDestroy: true,
                         items: itemComp
@@ -360,6 +381,15 @@ Ext.define('MAGAJOWeb.Application', {
             }
         });
 
+    },
+
+    onMuestraExplosionInsumos: function(obj, parametros) {
+        console.log(parametros);
+    },
+
+    onGuardarEntidades: function(obj, parametros) {
+        console.log(parametros);
     }
+
 
 });

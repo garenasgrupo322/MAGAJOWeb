@@ -1,2 +1,2 @@
 // @tag full-page
-// @require /Users/garenas/Documents/Developer/cube2/MAGAJOWeb/app.js
+// @require C:\developer\cube2\MAGAJOWeb\app.js
