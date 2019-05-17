@@ -13,6 +13,8 @@ var DATACATALOGS = 'Catalog/GetData';
 var MESSAGEERROR = 'Ocurrio un error por favor notifiquelo al administrador';
 var GETVIEWS = APIURL + "Views/{0}/view/{1}";
 
+var myMask;
+
 var body = document.body,
     html = document.documentElement;
 
@@ -98,6 +100,10 @@ Ext.define('MAGAJOWeb.Application', {
     onGetAjaxView: function(url, method, data, bind) {
         var currentThis = this;
 
+        if (myMask) {
+            myMask.show();
+        }
+
         Ext.Ajax.request({
             url: url,
             method: method,
@@ -107,6 +113,9 @@ Ext.define('MAGAJOWeb.Application', {
 
                 if (obj.success) {
                     currentThis.onCreateView(obj, bind);
+                    if (myMask) {
+                        myMask.hide();
+                    }
                 } else {
                     Ext.MessageBox.alert('Error', obj.message);
                 }
@@ -142,6 +151,13 @@ Ext.define('MAGAJOWeb.Application', {
                 height: HEIGHT,
                 items: itemComp
             });
+
+            myMask = new Ext.LoadMask({
+                msg    : 'Se esta generando su vista...',
+                target : this.currentView
+            });
+
+
         } else {
             var cont = Ext.getCmp(bind);
             console.log(cont);
@@ -342,6 +358,10 @@ Ext.define('MAGAJOWeb.Application', {
     },
 
     onDialogoVista: function(obj, parametros) {
+        if (myMask) {
+            myMask.show();
+        }
+
         var currentThis = this;
         var appId = localStorage.getItem("AppID");
 
@@ -374,10 +394,17 @@ Ext.define('MAGAJOWeb.Application', {
                 } else {
                     Ext.MessageBox.alert('Error', obj.message);
                 }
+
+                if (myMask) {
+                    myMask.hide();
+                }
             },
 
             failure: function(response, opts) {
                 window.alert("Error");
+                if (myMask) {
+                    myMask.hide();
+                }
             }
         });
 
@@ -389,7 +416,27 @@ Ext.define('MAGAJOWeb.Application', {
 
     onGuardarEntidades: function(obj, parametros) {
         console.log(parametros);
+    },
+
+    onLoadChange: function(obj, parametros) {
+        /*var idParent = parametros.FieldIDParent
+
+        var jsonData = {
+            condition = "AND",
+            filters = [
+                {
+                    field = idParent,
+                    values: [
+                        Ext.getCmp(idParent).getValue()
+                    ],
+                    operator: "="
+                }
+            ]
+        }
+
+        for (var b in parametros.FieldID) {
+            
+
+        }*/
     }
-
-
 });

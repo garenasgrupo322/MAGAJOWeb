@@ -1,5 +1,5 @@
 $app-name:  dynamic( 'MAGAJOWeb' );
-$image-search-path: 'C:/developer/cube2/MAGAJOWeb/build/development/MAGAJOWeb/resources';
+$image-search-path: 'c:/developer/cube2/MAGAJOWeb/build/development/MAGAJOWeb/resources';
 $theme-name:  dynamic( 'theme-triton' );
 $include-ext-abstractcomponent: dynamic(true);;
 $include-ext-abstractcontainer: dynamic(true);;
