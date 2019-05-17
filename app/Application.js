@@ -438,5 +438,21 @@ Ext.define('MAGAJOWeb.Application', {
             
 
         }*/
+    },
+
+    /*Funciones especificas por falta de tiempo*/ 
+    onCargarProyecto: function(obj, parametros) {
+
+        var btnShowInsumos = Ext.getCmp('ERPZANTEREQUISICIONES00000000000000000000000000005').getValue();
+
+        console.log(btnShowInsumos);
+        console.log("btnShowInsumos");
+
+        if (btnShowInsumos != null) {
+            Ext.getCmp('ERPZANTEREQUISICIONES00000000000000000000000000050').setDisabled(false);
+        } else {
+            Ext.getCmp('ERPZANTEREQUISICIONES00000000000000000000000000050').setDisabled(true);
+        }
+
     }
 });
