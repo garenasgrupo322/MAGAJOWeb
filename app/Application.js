@@ -10,6 +10,7 @@ var LOGINVIEW = 'Auth/ViewLogin';
 var LOGINPOST = 'Auth/Login';
 var HOMEVIEW = 'Menu/ViewMenu';
 var DATACATALOGS = 'Catalog/GetData';
+var MODELCATALOGS = 'Catalog/GetModel';
 var MESSAGEERROR = 'Ocurrio un error por favor notifiquelo al administrador';
 var GETVIEWS = APIURL + "Views/{0}/view/{1}";
 
@@ -20,6 +21,13 @@ var body = document.body,
 
 var HEIGHT = Math.max(body.scrollHeight, body.offsetHeight,
     html.clientHeight, html.scrollHeight, html.offsetHeight);
+
+var MAXHEIGHT = (HEIGHT - 100);
+
+var WIDTH = Math.max(body.scrollWidth, body.offsetWidth,
+    html.clientWidth, html.scrollWidth, html.offsetWidth);
+
+var MAXWIDTH = (WIDTH - 100);
 
 Ext.define('MAGAJOWeb.Application', {
     extend: 'Ext.app.Application',
@@ -55,24 +63,24 @@ Ext.define('MAGAJOWeb.Application', {
     },
 
     onGetIdApp: function() {
-        console.log("onGetIdApp");
+        //console.log("onGetIdApp");
 
         var loggedIn;
         var appId;
         var currentThis = this;
         loggedIn = localStorage.getItem("LoggedIn");
 
-        console.log(loggedIn);
+        //console.log(loggedIn);
         if (!(loggedIn == 'true')) {
-            console.log("onGetIdApp3");
-            console.log(APIURL + GETID);
+            //console.log("onGetIdApp3");
+            //console.log(APIURL + GETID);
 
             Ext.Ajax.request({
                 url: APIURL + GETID,
                 method: 'POST',
                 params: location.href,
                 success: function(response, opts) {
-                    console.log("onGetIdApp ajax");
+                    //console.log("onGetIdApp ajax");
                     var obj = Ext.decode(response.responseText);
                     localStorage.setItem("AppID", obj.id);
                     currentThis.onGetViewLogin();
@@ -83,7 +91,7 @@ Ext.define('MAGAJOWeb.Application', {
                 }
             });
         } else {
-            console.log("onGetIdApp2");
+            //console.log("onGetIdApp2");
 
             this.onCreateHome();
         }
@@ -153,14 +161,14 @@ Ext.define('MAGAJOWeb.Application', {
             });
 
             myMask = new Ext.LoadMask({
-                msg    : 'Se esta generando su vista...',
-                target : this.currentView
+                msg: 'Cargando...',
+                target: this.currentView
             });
 
 
         } else {
             var cont = Ext.getCmp(bind);
-            console.log(cont);
+            //console.log(cont);
             cont.removeAll(true);
             cont.updateLayout();
             cont.add(itemComp);
@@ -180,13 +188,24 @@ Ext.define('MAGAJOWeb.Application', {
         }
 
         for (var b in comp.attributes) {
-            if ((comp.attributes[b].attributeValue == "true") || (comp.attributes[b].attributeValue == "false") ||
-                (comp.attributes[b].attributeValue == "True") || (comp.attributes[b].attributeValue == "False") ||
-                (comp.attributes[b].attributeValue == "FALSE") || (comp.attributes[b].attributeValue == "FALSE")) {
-                comp.attributes[b].attributeValue = comp.attributes[b].attributeValue.toLowerCase();
-                extComponent[comp.attributes[b].attributeName] = (comp.attributes[b].attributeValue === "true");
+            if (comp.attributes[b].attributeName == "height") {
+                console.log(comp.attributes[b].attributeName);
+                console.log(comp.attributes[b].attributeValue);
+                extComponent[comp.attributes[b].attributeName] = parseInt(comp.attributes[b].attributeValue);
+            } else if (comp.attributes[b].attributeName == "width") {
+                console.log(comp.attributes[b].attributeName);
+                console.log(comp.attributes[b].attributeValue);
+                extComponent[comp.attributes[b].attributeName] = parseInt(comp.attributes[b].attributeValue);
             } else {
-                extComponent[comp.attributes[b].attributeName] = comp.attributes[b].attributeValue;
+                console.log(comp.attributes);
+                if ((comp.attributes[b].attributeValue == "true") || (comp.attributes[b].attributeValue == "false") ||
+                    (comp.attributes[b].attributeValue == "True") || (comp.attributes[b].attributeValue == "False") ||
+                    (comp.attributes[b].attributeValue == "FALSE") || (comp.attributes[b].attributeValue == "FALSE")) {
+                    comp.attributes[b].attributeValue = comp.attributes[b].attributeValue.toLowerCase();
+                    extComponent[comp.attributes[b].attributeName] = (comp.attributes[b].attributeValue === "true");
+                } else {
+                    extComponent[comp.attributes[b].attributeName] = comp.attributes[b].attributeValue;
+                }
             }
         }
 
@@ -222,7 +241,7 @@ Ext.define('MAGAJOWeb.Application', {
             var cmpEvent = comp.events[b];
 
             for (var c in cmpEvent.behaviours) {
-                
+
                 if (cmpEvent.eventName != "create") {
                     var evetBehaviors = cmpEvent.behaviours[c];
 
@@ -232,12 +251,12 @@ Ext.define('MAGAJOWeb.Application', {
 
                         for (var d in evetBehaviors.parameters) {
                             var param = evetBehaviors.parameters[d];
-                            console.log(param);
+                            //console.log(param);
                             parametros[param.parameterName] = param.parameterValue;
                         }
 
                         var fun = "MAGAJOWeb.app." + evetBehaviors.behaviourId + "(this, parametros)";
-                        console.log(fun);
+                        //console.log(fun);
 
                         eval(fun);
                     }
@@ -248,39 +267,90 @@ Ext.define('MAGAJOWeb.Application', {
         }
 
         if (comp.listOfValues) {
-            this.onListOfValuesAjax(extComponent, comp);
-            extComponent.store = Ext.data.StoreManager.lookup(comp.listOfValues.entity);
+            var nameModel = comp.listOfValues.entity + "model" + Date.now();
+            var nameStore = comp.listOfValues.entity + "store" + Date.now();
+
+            this.onListOfValuesAjax(extComponent, comp, nameModel, nameStore);
+            extComponent.store = Ext.data.StoreManager.lookup(nameStore);
+
+            var dataParametros = {
+                IEntityID: comp.listOfValues.entity,
+                Itoken: localStorage.getItem("UserToken"),
+                FilterData: null,
+                SortData: null,
+                QueryLimits: null,
+                ColumnData: null,
+                MGJAPP_ID: localStorage.getItem("AppID")
+            }
+
+            if (comp.componentId == "ERPEXPLOSIONINSUMOS0000000000000000000000000000031") {
+                var valuesFilter = Ext.getCmp('ERPZANTEREQUISICIONES00000000000000000000000000005').getValue();
+
+                dataParametros.FilterData = {
+                    "condition": "AND",
+                    "filters": [{
+                        "field": "Neodata0000000000007LINK0000000000000003",
+                        "values": [
+                            valuesFilter
+                        ],
+                        "operador": "="
+                    }]
+                }
+            }
+
+            console.log(dataParametros);
+
+            var store = Ext.data.StoreManager.lookup(nameStore);
+            store.load({
+                params: dataParametros
+            });
         }
 
         return extComponent;
     },
 
-    onListOfValuesAjax: function(extCmp, dataCmp) {
+    /*Funcion que crea el datastore*/
+    onListOfValuesAjax: function(extCmp, dataCmp, nameModel, nameStore) {
         var apiUrl = APIURL + DATACATALOGS;
+        var apiModelUrl = APIURL + MODELCATALOGS;
+        var currentContext = this;
 
-        var dataParametros = {
-            IEntityID: dataCmp.listOfValues.entity,
-            Itoken: localStorage.getItem("UserToken"),
-            FilterData: null,
-            SortData: null,
-            QueryLimits: null,
-            ColumnData: null,
-            MGJAPP_ID: localStorage.getItem("AppID")
+        var modelParametros = {
+            MGJAPP_ID: localStorage.getItem("AppID"),
+            IEntityID: dataCmp.listOfValues.entity
         }
 
+        /*Model*/
         Ext.Ajax.request({
-            url: apiUrl,
-            async: false,
+            url: apiModelUrl,
             method: 'POST',
-            jsonData: dataParametros,
+            async: false,
+            jsonData: modelParametros,
             success: function(response, opts) {
                 var obj = Ext.decode(response.responseText);
 
+                //console.log(obj);
+
+                Ext.define(nameModel, {
+                    extend: 'Ext.data.Model',
+                    fields: obj.model
+                });
+
                 Ext.create('Ext.data.Store', {
-                    storeId: dataCmp.listOfValues.entity,
-                    autoLoad: true,
-                    fields: obj.model,
-                    data: obj.data.data
+                    storeId: nameStore,
+                    model: nameModel,
+                    proxy: {
+                        type: 'ajax',
+                        url: apiUrl,
+                        paramsAsJson: true,
+                        actionMethods: {
+                            read: 'POST'
+                        },
+                        reader: {
+                            type: 'json',
+                            rootProperty: 'data'
+                        }
+                    }
                 });
 
             },
@@ -343,8 +413,8 @@ Ext.define('MAGAJOWeb.Application', {
     },
 
     onCargarVista: function(obj, parametros) {
-        console.log("onCargarVista");
-        console.log(parametros);
+        //console.log("onCargarVista");
+        //console.log(parametros);
         var appId = localStorage.getItem("AppID");
         var apiUrl = APIURL + 'Views/' + appId + '/view/' + parametros.Vista;
         this.onGetAjaxView(apiUrl, 'GET', null, parametros.Container);
@@ -367,8 +437,8 @@ Ext.define('MAGAJOWeb.Application', {
 
         var url = GETVIEWS.replace("{0}", appId);
         url = url.replace("{1}", parametros.Vista);
-        
-        console.log(url);
+
+        //console.log(url);
 
         Ext.Ajax.request({
             url: url,
@@ -376,7 +446,7 @@ Ext.define('MAGAJOWeb.Application', {
             success: function(response, opts) {
                 var obj = Ext.decode(response.responseText);
 
-                console.log(obj);
+                //console.log(obj);
 
                 if (obj.success) {
                     var itemComp = [];
@@ -385,8 +455,14 @@ Ext.define('MAGAJOWeb.Application', {
                         itemComp.push(currentThis.onCreateComponent(obj.Components[b]));
                     }
 
+                    console.log(itemComp);
+
                     Ext.create('Ext.window.Window', {
                         title: obj.ViewName,
+                        minWidth: 510,
+                        maxWidth: MAXHEIGHT,
+                        minHeight: 510,
+                        maxHeight: MAXWIDTH,
                         layout: 'fit',
                         autoDestroy: true,
                         items: itemComp
@@ -440,13 +516,16 @@ Ext.define('MAGAJOWeb.Application', {
         }*/
     },
 
-    /*Funciones especificas por falta de tiempo*/ 
+    onBeforeLoad: function(obj, parametros) {
+        console.log("onBeforeLoad");
+    },
+
+    /*Funciones especificas por falta de tiempo*/
     onCargarProyecto: function(obj, parametros) {
 
         var btnShowInsumos = Ext.getCmp('ERPZANTEREQUISICIONES00000000000000000000000000005').getValue();
 
-        console.log(btnShowInsumos);
-        console.log("btnShowInsumos");
+        //console.log(btnShowInsumos);
 
         if (btnShowInsumos != null) {
             Ext.getCmp('ERPZANTEREQUISICIONES00000000000000000000000000050').setDisabled(false);
