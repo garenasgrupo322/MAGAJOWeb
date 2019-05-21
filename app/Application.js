@@ -189,15 +189,10 @@ Ext.define('MAGAJOWeb.Application', {
 
         for (var b in comp.attributes) {
             if (comp.attributes[b].attributeName == "height") {
-                console.log(comp.attributes[b].attributeName);
-                console.log(comp.attributes[b].attributeValue);
                 extComponent[comp.attributes[b].attributeName] = parseInt(comp.attributes[b].attributeValue);
             } else if (comp.attributes[b].attributeName == "width") {
-                console.log(comp.attributes[b].attributeName);
-                console.log(comp.attributes[b].attributeValue);
                 extComponent[comp.attributes[b].attributeName] = parseInt(comp.attributes[b].attributeValue);
             } else {
-                console.log(comp.attributes);
                 if ((comp.attributes[b].attributeValue == "true") || (comp.attributes[b].attributeValue == "false") ||
                     (comp.attributes[b].attributeValue == "True") || (comp.attributes[b].attributeValue == "False") ||
                     (comp.attributes[b].attributeValue == "FALSE") || (comp.attributes[b].attributeValue == "FALSE")) {
@@ -283,7 +278,8 @@ Ext.define('MAGAJOWeb.Application', {
                 MGJAPP_ID: localStorage.getItem("AppID")
             }
 
-            if (comp.componentId == "ERPEXPLOSIONINSUMOS0000000000000000000000000000031") {
+            if (comp.componentId == "ERPEXPLOSIONINSUMOS0000000000000000000000000000031" || 
+                comp.componentId == "ERPEXPLOSIONINSUMOS0000000000000000000000000000039") {
                 var valuesFilter = Ext.getCmp('ERPZANTEREQUISICIONES00000000000000000000000000005').getValue();
 
                 dataParametros.FilterData = {
@@ -459,9 +455,9 @@ Ext.define('MAGAJOWeb.Application', {
 
                     Ext.create('Ext.window.Window', {
                         title: obj.ViewName,
-                        minWidth: 510,
+                        minWidth: 730,
                         maxWidth: MAXHEIGHT,
-                        minHeight: 510,
+                        minHeight: 600,
                         maxHeight: MAXWIDTH,
                         layout: 'fit',
                         autoDestroy: true,
@@ -532,6 +528,49 @@ Ext.define('MAGAJOWeb.Application', {
         } else {
             Ext.getCmp('ERPZANTEREQUISICIONES00000000000000000000000000050').setDisabled(true);
         }
+
+    },
+
+    filtroExplosionInsumos: function(obj, parametros) {
+        var valuesFilter = Ext.getCmp('ERPEXPLOSIONINSUMOS0000000000000000000000000000039').getValue();
+
+        if (valuesFilter != null) {
+            /*grid*/
+            var store = Ext.getCmp('ERPEXPLOSIONINSUMOS0000000000000000000000000000031').getStore();
+
+            var dataParametros = {
+                IEntityID: 'Neodata0000000000007',
+                Itoken: localStorage.getItem("UserToken"),
+                FilterData: null,
+                SortData: null,
+                QueryLimits: null,
+                ColumnData: null,
+                MGJAPP_ID: localStorage.getItem("AppID")
+            }
+
+            dataParametros.FilterData = {
+                "condition": "AND",
+                "filters": [{
+                    "field": "Neodata0000000000007LINK0000000000000004",
+                    "values": [
+                        valuesFilter
+                    ],
+                    "operador": "="
+                }]
+            }
+
+            console.log(dataParametros);
+
+            store.load({
+                params: dataParametros
+            });
+
+        } else {
+            Ext.MessageBox.alert('Error', "Por favor seleccione un valor para filtrar");
+        }
+    },
+
+    agregarInsumoGrid: function() {
 
     }
 });
