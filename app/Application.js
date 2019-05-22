@@ -11,8 +11,11 @@ var LOGINPOST = 'Auth/Login';
 var HOMEVIEW = 'Menu/ViewMenu';
 var DATACATALOGS = 'Catalog/GetData';
 var MODELCATALOGS = 'Catalog/GetModel';
+var SETREQUI = APIURL + 'Catalog/SetRequi';
 var MESSAGEERROR = 'Ocurrio un error por favor notifiquelo al administrador';
 var GETVIEWS = APIURL + "Views/{0}/view/{1}";
+var FILTROREQUIINSUMO = new Object();
+FILTROREQUIINSUMO.filtros = [];
 
 var myMask;
 
@@ -261,7 +264,7 @@ Ext.define('MAGAJOWeb.Application', {
             }
         }
 
-        if (comp.listOfValues) {
+        if ((comp.listOfValues) && (comp.componentId != "ERPZANTEREQUISICIONES00000000000000000000000000012")) {
             var nameModel = comp.listOfValues.entity + "model" + Date.now();
             var nameStore = comp.listOfValues.entity + "store" + Date.now();
 
@@ -278,9 +281,15 @@ Ext.define('MAGAJOWeb.Application', {
                 MGJAPP_ID: localStorage.getItem("AppID")
             }
 
-            if (comp.componentId == "ERPEXPLOSIONINSUMOS0000000000000000000000000000031" || 
+            if (comp.componentId == "ERPEXPLOSIONINSUMOS0000000000000000000000000000031" ||
                 comp.componentId == "ERPEXPLOSIONINSUMOS0000000000000000000000000000039") {
                 var valuesFilter = Ext.getCmp('ERPZANTEREQUISICIONES00000000000000000000000000005').getValue();
+
+                if (comp.componentId == "ERPEXPLOSIONINSUMOS0000000000000000000000000000031") {
+                    extComponent.selModel = {
+                        selType: 'checkboxmodel'
+                    }
+                }
 
                 dataParametros.FilterData = {
                     "condition": "AND",
@@ -300,6 +309,86 @@ Ext.define('MAGAJOWeb.Application', {
             store.load({
                 params: dataParametros
             });
+        } else if ((comp.listOfValues) && (comp.componentId == "ERPZANTEREQUISICIONES00000000000000000000000000012")) {
+
+            var nameModel = "modelRequiInsumo";
+            var nameStore = "storeRequiInsumo";
+
+            Ext.define(nameModel, {
+                extend: 'Ext.data.Model',
+                fields: [{
+                    name: 'MGJREPO_ID',
+                    type: 'string',
+                    "unique": true
+                }, {
+                    name: 'DESCRIPCIONLARGA',
+                    type: 'string'
+                }, {
+                    name: 'UNIDAD',
+                    type: 'string'
+                }, {
+                    name: 'INSUMO',
+                    type: 'string'
+                }, {
+                    name: 'CANTIDADPEDIDA',
+                    type: 'number'
+                }, {
+                    name: 'CANTIDADREQUERIDA',
+                    type: 'number'
+                }, {
+                    name: 'CANTIDADSOLICITAR',
+                    type: 'string'
+                }, {
+                    name: 'OBSERVACIONES',
+                    type: 'string'
+                }]
+            });
+
+            Ext.create('Ext.data.Store', {
+                storeId: nameStore,
+                model: nameModel,
+                proxy: {
+                    type: 'ajax',
+                    url: APIURL + 'Catalog/ObtieneExplosionDatos',
+                    paramsAsJson: true,
+                    actionMethods: {
+                        read: 'POST'
+                    },
+                    reader: {
+                        type: 'json',
+                        rootProperty: 'data'
+                    }
+                }
+            });
+
+            extComponent.store = Ext.data.StoreManager.lookup(nameStore);
+
+            extComponent.plugins = {
+                ptype: 'cellediting',
+                clicksToEdit: 1
+            }
+        }
+
+        switch (comp.componentId) {
+            case "ERPZANTEREQUISICIONES00000000000000000000000000029":
+                extComponent.editor = {
+                    completeOnEnter: false,
+                    field: {
+                        xtype: 'numberfield',
+                        allowBlank: false,
+                        allowDecimals: true
+                    }
+                }
+                break;
+            case "ERPZANTEREQUISICIONES00000000000000000000000000031":
+                extComponent.editor = {
+                    completeOnEnter: false,
+                    field: {
+                        xtype: 'textareafield',
+                        allowBlank: false
+                    }
+                }
+                break;
         }
 
         return extComponent;
@@ -572,5 +661,88 @@ Ext.define('MAGAJOWeb.Application', {
 
     agregarInsumoGrid: function() {
 
+        var grid = Ext.getCmp("ERPEXPLOSIONINSUMOS0000000000000000000000000000031");
+        var selection = grid.getSelectionModel().getSelection();
+
+
+        var gridRequi = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000012");
+
+        for (var b in selection) {
+            var data = selection[b].data;
+
+            var filtro = {
+                "valor": data.MGJREPO_ID
+            };
+            FILTROREQUIINSUMO.filtros.push(filtro);
+        }
+
+        console.log(FILTROREQUIINSUMO);
+
+
+        gridRequi.getStore().load({
+            params: FILTROREQUIINSUMO
+        });
+
+        grid.up('window').close();
+    },
+
+    onGuardarRequisicion: function() {
+        var formulario = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000004")
+
+        console.log("valida formulario");
+
+        if (formulario.isValid()) {
+
+
+            /*var gridRequi = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000012");
+
+            var data = gridRequi.getStore().getData();*/
+
+            var fechaRequi = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000013").getValue();
+            var codigoAuxiliar = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000015").getValue();
+            var observaciones = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000010").getValue();
+            var lugarEntrega = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000011").getValue();
+            var fechaRequerida = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000014").getValue();
+            var idResponsable = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000007").getValue();
+            var idProyecto = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000005").getValue();
+            var idResponsable1 = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000008").getValue();
+            var idResponsable2 = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000009").getValue();
+            var contrato = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000016").getValue();
+
+            var requi = {
+                Neodata0000000000003DATE0000000000000003: fechaRequi,
+                Neodata0000000000003STRING00000000000003: codigoAuxiliar,
+                Neodata0000000000003STRING00000000000005: observaciones,
+                Neodata0000000000003STRING00000000000006: lugarEntrega,
+                Neodata0000000000003DATE0000000000000004: fechaRequerida,
+                Neodata0000000000003LINK0000000000000004: idResponsable,
+                Neodata0000000000003LINK0000000000000003: idProyecto,
+                Neodata0000000000003LINK0000000000000011: idResponsable1,
+                Neodata0000000000003LINK0000000000000012: idResponsable2,
+                Neodata0000000000003STRING00000000000004: contrato
+            }
+
+            var params = Ext.util.JSON.encode(requi);
+
+            console.log(params);
+
+            Ext.Ajax.request({
+                url: SETREQUI,
+                method: 'POST',
+                jsonData: {parametros: params},
+                success: function(response, opts) {
+                    var obj = Ext.decode(response.responseText);
+
+                    if (obj.success) {
+                        Ext.MessageBox.alert('Notificación', 'Su alta se hizo correctamente');
+                    } else {
+                        Ext.MessageBox.alert('Error', obj.message);
+                    }
+                },
+                failure: function(response, opts) {
+                    Ext.MessageBox.alert('Error', MESSAGEERROR);
+                }
+            });
+        }
     }
 });
