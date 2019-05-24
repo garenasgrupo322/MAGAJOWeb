@@ -715,7 +715,7 @@ Ext.define('MAGAJOWeb.Application', {
                 Neodata0000000000003STRING00000000000005: observaciones,
                 Neodata0000000000003STRING00000000000006: lugarEntrega,
                 Neodata0000000000003DATE0000000000000004: fechaRequerida,
-                Neodata0000000000003LINK0000000000000004: idResponsable,
+                //Neodata0000000000003LINK0000000000000004: idResponsable,
                 Neodata0000000000003LINK0000000000000003: idProyecto,
                 Neodata0000000000003LINK0000000000000011: idResponsable1,
                 Neodata0000000000003LINK0000000000000012: idResponsable2,
