@@ -4,7 +4,7 @@
  * initialization details.
  */
 
-var APIURL = "https://localhost:44332/Api/";
+var APIURL = "https://localhost:5001/Api/";
 var GETID = 'Auth/GetId';
 var LOGINVIEW = 'Auth/ViewLogin';
 var LOGINPOST = 'Auth/Login';
@@ -691,12 +691,33 @@ Ext.define('MAGAJOWeb.Application', {
 
         console.log("valida formulario");
 
-        if (formulario.isValid()) {
+        var gridRequi = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000012");
+        var data = gridRequi.getStore().getData().items;
+        var error = false;
+        var insumos = [];
 
+        if (data.length > 0) {
+            for (var b in data) {
+                if (data[b].data.CANTIDADSOLICITAR <= 0) {
+                    error = true;
+                }
 
-            /*var gridRequi = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000012");
+                var insumo = {
+                    idInsumo: data[b].data.MGJREPO_ID,
+                    CANTIDADSOLICITAR: data[b].data.CANTIDADSOLICITAR,
+                    OBSERVACIONES: data[b].data.OBSERVACIONES
+                }
 
-            var data = gridRequi.getStore().getData();*/
+                insumos.push(insumo);
+            }
+        }
+
+        if (error) {
+            Ext.MessageBox.alert('Error', "Por favor ingrese la cantidad a solicitar para todos los insumos");
+        }
+
+        if ((!error) && (formulario.isValid())) {
+
 
             var fechaRequi = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000013").getValue();
             var codigoAuxiliar = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000015").getValue();
@@ -722,9 +743,11 @@ Ext.define('MAGAJOWeb.Application', {
                 Neodata0000000000003STRING00000000000004: contrato
             }
 
+            requi.insumos = insumos;
+
             var params = Ext.util.JSON.encode(requi);
 
-            console.log(params);
+            //console.log(params);
 
             Ext.Ajax.request({
                 url: SETREQUI,
@@ -735,6 +758,9 @@ Ext.define('MAGAJOWeb.Application', {
 
                     if (obj.success) {
                         Ext.MessageBox.alert('Notificación', 'Su alta se hizo correctamente');
+                        formulario.reset();
+                        gridRequi.getStore().removeAll();
+                        gridRequi.getStore().sync();
                     } else {
                         Ext.MessageBox.alert('Error', obj.message);
                     }
