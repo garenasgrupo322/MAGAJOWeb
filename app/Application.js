@@ -1,4 +1,4 @@
-﻿/**
+/**
  * The main application class. An instance of this class is created by app.js when it
  * calls Ext.application(). This is the ideal place to handle application launch and
  * initialization details.
@@ -719,6 +719,10 @@ Ext.define('MAGAJOWeb.Application', {
         if ((!error) && (formulario.isValid())) {
 
 
+            if (myMask) {
+                myMask.show();
+            } 
+
             var fechaRequi = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000013").getValue();
             var codigoAuxiliar = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000015").getValue();
             var observaciones = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000010").getValue();
@@ -764,6 +768,10 @@ Ext.define('MAGAJOWeb.Application', {
                         gridRequi.getStore().sync();
                     } else {
                         Ext.MessageBox.alert('Error', obj.message);
+                    }
+
+                    if (myMask) {
+                        myMask.hide();
                     }
                 },
                 failure: function(response, opts) {
