@@ -1,10 +1,10 @@
-/**
+﻿/**
  * The main application class. An instance of this class is created by app.js when it
  * calls Ext.application(). This is the ideal place to handle application launch and
  * initialization details.
  */
 
-var APIURL = "../../magajoApi/Api/";
+var APIURL = "https://localhost:5001/Api/";
 var GETID = 'Auth/GetId';
 var LOGINVIEW = 'Auth/ViewLogin';
 var LOGINPOST = 'Auth/Login';
@@ -12,6 +12,7 @@ var HOMEVIEW = 'Menu/ViewMenu';
 var DATACATALOGS = 'Catalog/GetData';
 var MODELCATALOGS = 'Catalog/GetModel';
 var SETREQUI = APIURL + 'Catalog/SetRequi';
+var SETDATA = APIURL + 'Data';
 var MESSAGEERROR = 'Ocurrio un error por favor notifiquelo al administrador';
 var GETVIEWS = APIURL + "Views/{0}/view/{1}";
 var FILTROREQUIINSUMO = new Object();
@@ -575,10 +576,6 @@ Ext.define('MAGAJOWeb.Application', {
         console.log(parametros);
     },
 
-    onGuardarEntidades: function(obj, parametros) {
-        console.log(parametros);
-    },
-
     onLoadChange: function(obj, parametros) {
         /*var idParent = parametros.FieldIDParent
 
@@ -779,5 +776,29 @@ Ext.define('MAGAJOWeb.Application', {
                 }
             });
         }
-    }
+    },
+
+    /*Funciones dinamicas*/
+    onGuardarEntidades: function(obj, parametros) {
+        var form = obj.ownerCt.getForm();
+        console.log(form.isValid());
+        if (form.isValid()) {
+            form.submit({
+                clientValidation: true,
+                jsonSubmit:true,
+                url: SETDATA,
+                method: 'POST',
+                waitMsg: 'Por favor espere',
+                success: function() {
+                    console.log('success');
+                }, 
+                failure: function() {
+                    console.log('failure');
+                }
+
+            })
+        }
+
+        console.log(parametros);
+    },
 });
