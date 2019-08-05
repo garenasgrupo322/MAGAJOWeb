@@ -4,7 +4,7 @@
  * initialization details.
  */
 
-var APIURL = "https://localhost:5001/Api/";
+var APIURL = "../../requisicionesApi/Api/";
 var GETID = 'Auth/GetId';
 var LOGINVIEW = 'Auth/ViewLogin';
 var LOGINPOST = 'Auth/Login';
@@ -12,11 +12,14 @@ var HOMEVIEW = 'Menu/ViewMenu';
 var DATACATALOGS = 'Catalog/GetData';
 var MODELCATALOGS = 'Catalog/GetModel';
 var SETREQUI = APIURL + 'Catalog/SetRequi';
-var SETDATA = APIURL + 'Data';
 var MESSAGEERROR = 'Ocurrio un error por favor notifiquelo al administrador';
 var GETVIEWS = APIURL + "Views/{0}/view/{1}";
 var FILTROREQUIINSUMO = new Object();
 FILTROREQUIINSUMO.filtros = [];
+
+var FILTROSINSUMOS = [];
+var WININSUMOSGRID = [];
+var WININSUMOSGRIDFILTRO = [];
 
 var myMask;
 
@@ -152,9 +155,10 @@ Ext.define('MAGAJOWeb.Application', {
         }
 
 
-        console.log(itemComp);
+        //console.log(itemComp);
 
         if (bind == null) {
+			
             this.currentView = Ext.create('Ext.panel.Panel', {
                 renderTo: Ext.getBody(),
                 title: 'MAGAJOWeb',
@@ -302,65 +306,74 @@ Ext.define('MAGAJOWeb.Application', {
                         "operador": "="
                     }]
                 }
+				
+				if (comp.componentId == "ERPEXPLOSIONINSUMOS0000000000000000000000000000031") {
+                    WININSUMOSGRID = dataParametros;
+                }
             }
 
-            console.log(dataParametros);
+            //console.log(dataParametros);
+			
+			FILTROSINSUMOS = dataParametros;
 
             var store = Ext.data.StoreManager.lookup(nameStore);
             store.load({
-                params: dataParametros
+                params: FILTROSINSUMOS
             });
         } else if ((comp.listOfValues) && (comp.componentId == "ERPZANTEREQUISICIONES00000000000000000000000000012")) {
-
-            var nameModel = "modelRequiInsumo";
+			
+			var nameModel = "modelRequiInsumo";
             var nameStore = "storeRequiInsumo";
+			
+			if (!Ext.ClassManager.isCreated(nameModel)) {
 
-            Ext.define(nameModel, {
-                extend: 'Ext.data.Model',
-                fields: [{
-                    name: 'MGJREPO_ID',
-                    type: 'string',
-                    "unique": true
-                }, {
-                    name: 'DESCRIPCIONLARGA',
-                    type: 'string'
-                }, {
-                    name: 'UNIDAD',
-                    type: 'string'
-                }, {
-                    name: 'INSUMO',
-                    type: 'string'
-                }, {
-                    name: 'CANTIDADPEDIDA',
-                    type: 'number'
-                }, {
-                    name: 'CANTIDADREQUERIDA',
-                    type: 'number'
-                }, {
-                    name: 'CANTIDADSOLICITAR',
-                    type: 'string'
-                }, {
-                    name: 'OBSERVACIONES',
-                    type: 'string'
-                }]
-            });
-
-            Ext.create('Ext.data.Store', {
-                storeId: nameStore,
-                model: nameModel,
-                proxy: {
-                    type: 'ajax',
-                    url: APIURL + 'Catalog/ObtieneExplosionDatos',
-                    paramsAsJson: true,
-                    actionMethods: {
-                        read: 'POST'
-                    },
-                    reader: {
-                        type: 'json',
-                        rootProperty: 'data'
-                    }
-                }
-            });
+				Ext.define(nameModel, {
+					extend: 'Ext.data.Model',
+					fields: [{
+						name: 'MGJREPO_ID',
+						type: 'string',
+						"unique": true
+					}, {
+						name: 'DESCRIPCIONLARGA',
+						type: 'string'
+					}, {
+						name: 'UNIDAD',
+						type: 'string'
+					}, {
+						name: 'INSUMO',
+						type: 'string'
+					}, {
+						name: 'CANTIDADPEDIDA',
+						type: 'number'
+					}, {
+						name: 'CANTIDADREQUERIDA',
+						type: 'number'
+					}, {
+						name: 'CANTIDADSOLICITAR',
+						type: 'string'
+					}, {
+						name: 'OBSERVACIONES',
+						type: 'string'
+					} ]
+				});
+				
+				Ext.create('Ext.data.Store', {
+					storeId: nameStore,
+					model: nameModel,
+					/*proxy: {
+						type: 'ajax',
+						url: APIURL + 'Catalog/ObtieneExplosionDatos',
+						paramsAsJson: true,
+						actionMethods: {
+							read: 'POST'
+						},
+						reader: {
+							type: 'json',
+							rootProperty: 'data'
+						}
+					}*/
+				});
+			}
 
             extComponent.store = Ext.data.StoreManager.lookup(nameStore);
 
@@ -391,6 +404,31 @@ Ext.define('MAGAJOWeb.Application', {
                 }
                 break;
         }
+		
+		if (comp.componentId == "ERPZANTEREQUISICIONES00000000000000000000000000063") {
+			
+			extComponent.handler = function(grid, rowIndex, colIndex) {
+				var rec = grid.getStore().getAt(rowIndex);
+				grid.getStore().remove(rec);
+				
+				/*var gridRequi = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000012");
+				var index = FILTROREQUIINSUMO.filtros.findIndex(p => p.valor == null);
+				
+				if (index > -1) {
+				   FILTROREQUIINSUMO.filtros.splice(index, 1);
+				}
+				
+				index = FILTROREQUIINSUMO.filtros.findIndex(p => p.valor == rec.get('MGJREPO_ID'));
+				
+				if (index > -1) {
+				   FILTROREQUIINSUMO.filtros.splice(index, 1);
+				}*/
+
+				/*gridRequi.getStore().load({
+					params: FILTROREQUIINSUMO
+				})*/;
+			}
+		}
 
         return extComponent;
     },
@@ -576,6 +614,10 @@ Ext.define('MAGAJOWeb.Application', {
         console.log(parametros);
     },
 
+    onGuardarEntidades: function(obj, parametros) {
+        console.log(parametros);
+    },
+
     onLoadChange: function(obj, parametros) {
         /*var idParent = parametros.FieldIDParent
 
@@ -605,7 +647,11 @@ Ext.define('MAGAJOWeb.Application', {
     /*Funciones especificas por falta de tiempo*/
     onCargarProyecto: function(obj, parametros) {
 
-        var btnShowInsumos = Ext.getCmp('ERPZANTEREQUISICIONES00000000000000000000000000005').getValue();
+
+    },
+	
+	OnSelectChange: function() {
+		var btnShowInsumos = Ext.getCmp('ERPZANTEREQUISICIONES00000000000000000000000000005').getValue();
 
         //console.log(btnShowInsumos);
 
@@ -614,53 +660,68 @@ Ext.define('MAGAJOWeb.Application', {
         } else {
             Ext.getCmp('ERPZANTEREQUISICIONES00000000000000000000000000050').setDisabled(true);
         }
+		
+		var gridRequi = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000012");
 
-    },
+
+        var filtro = {
+			"valor": null
+		};
+		
+		FILTROREQUIINSUMO.filtros = [];
+		//FILTROREQUIINSUMO.filtros.push(filtro);
+
+
+        /*gridRequi.getStore().load({
+            params: FILTROREQUIINSUMO
+        });*/
+		
+		console.log("set data null");
+		//gridRequi.getStore().setData(null);
+		gridRequi.getStore().removeAll();
+		gridRequi.getStore().sync();
+		//console.log(gridRequi.getStore().setData(null));
+	},
 
     filtroExplosionInsumos: function(obj, parametros) {
         var valuesFilter = Ext.getCmp('ERPEXPLOSIONINSUMOS0000000000000000000000000000039').getValue();
+		var store = Ext.getCmp('ERPEXPLOSIONINSUMOS0000000000000000000000000000031').getStore();
+		
+		var filtro = WININSUMOSGRID;
+		WININSUMOSGRIDFILTRO = JSON.parse(JSON.stringify(WININSUMOSGRID));
 
         if (valuesFilter != null) {
-            /*grid*/
-            var store = Ext.getCmp('ERPEXPLOSIONINSUMOS0000000000000000000000000000031').getStore();
-
-            var dataParametros = {
-                IEntityID: 'Neodata0000000000007',
-                Itoken: localStorage.getItem("UserToken"),
-                FilterData: null,
-                SortData: null,
-                QueryLimits: null,
-                ColumnData: null,
-                MGJAPP_ID: localStorage.getItem("AppID")
-            }
-
-            dataParametros.FilterData = {
-                "condition": "AND",
-                "filters": [{
-                    "field": "Neodata0000000000007LINK0000000000000004",
-                    "values": [
-                        valuesFilter
-                    ],
-                    "operador": "="
-                }]
-            }
-
-            console.log(dataParametros);
-
+			
+			WININSUMOSGRIDFILTRO.FilterData.filters.push({
+				"field": "Neodata0000000000007LINK0000000000000004",
+				"values": [
+					valuesFilter
+				],
+				"operador": "="
+			});
+			
             store.load({
-                params: dataParametros
+                params: WININSUMOSGRIDFILTRO
             });
 
         } else {
-            Ext.MessageBox.alert('Error', "Por favor seleccione un valor para filtrar");
+			
+			store.load({
+                params: WININSUMOSGRIDFILTRO
+            });
+			
         }
     },
 
     agregarInsumoGrid: function() {
+		
+		if (myMask) {
+            myMask.show();
+        }
 
         var grid = Ext.getCmp("ERPEXPLOSIONINSUMOS0000000000000000000000000000031");
         var selection = grid.getSelectionModel().getSelection();
-
+		var requiinsumo = JSON.parse(JSON.stringify(FILTROREQUIINSUMO));
 
         var gridRequi = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000012");
 
@@ -670,15 +731,27 @@ Ext.define('MAGAJOWeb.Application', {
             var filtro = {
                 "valor": data.MGJREPO_ID
             };
-            FILTROREQUIINSUMO.filtros.push(filtro);
+            requiinsumo.filtros.push(filtro);
         }
+		
+		Ext.Ajax.request({
+			url: APIURL + 'Catalog/ObtieneExplosionDatos',
+			method: 'POST',
+			jsonData: requiinsumo,
+			success: function(response, opts) {
+				var obj = Ext.decode(response.responseText);
+				
+				gridRequi.getStore().add(obj.data);
+				
+				if (myMask) {
+					myMask.hide();
+				}
+			},
 
-        console.log(FILTROREQUIINSUMO);
-
-
-        gridRequi.getStore().load({
-            params: FILTROREQUIINSUMO
-        });
+			failure: function(response, opts) {
+				window.alert("Error");
+			}
+		});
 
         grid.up('window').close();
     },
@@ -714,11 +787,11 @@ Ext.define('MAGAJOWeb.Application', {
         }
 
         if ((!error) && (formulario.isValid())) {
+			
+			if (myMask) {
+				myMask.show();
+			}
 
-
-            if (myMask) {
-                myMask.show();
-            } 
 
             var fechaRequi = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000013").getValue();
             var codigoAuxiliar = Ext.getCmp("ERPZANTEREQUISICIONES00000000000000000000000000015").getValue();
@@ -759,46 +832,34 @@ Ext.define('MAGAJOWeb.Application', {
                     var obj = Ext.decode(response.responseText);
 
                     if (obj.success) {
+						if (myMask) {
+							myMask.hide();
+						}
+						
+						FILTROREQUIINSUMO = new Object();
+						FILTROREQUIINSUMO.filtros = [];
+						
                         Ext.MessageBox.alert('Notificación', 'Su alta se hizo correctamente');
                         formulario.reset();
                         gridRequi.getStore().removeAll();
                         gridRequi.getStore().sync();
+						
+						
+						
                     } else {
+						if (myMask) {
+							myMask.hide();
+						}
                         Ext.MessageBox.alert('Error', obj.message);
-                    }
-
-                    if (myMask) {
-                        myMask.hide();
                     }
                 },
                 failure: function(response, opts) {
                     Ext.MessageBox.alert('Error', MESSAGEERROR);
+					if (myMask) {
+                        myMask.hide();
+                    }
                 }
             });
         }
-    },
-
-    /*Funciones dinamicas*/
-    onGuardarEntidades: function(obj, parametros) {
-        var form = obj.ownerCt.getForm();
-        console.log(form.isValid());
-        if (form.isValid()) {
-            form.submit({
-                clientValidation: true,
-                jsonSubmit:true,
-                url: SETDATA,
-                method: 'POST',
-                waitMsg: 'Por favor espere',
-                success: function() {
-                    console.log('success');
-                }, 
-                failure: function() {
-                    console.log('failure');
-                }
-
-            })
-        }
-
-        console.log(parametros);
-    },
+    }
 });
