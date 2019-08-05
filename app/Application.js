@@ -4,7 +4,8 @@
  * initialization details.
  */
 
-var APIURL = "https://localhost:5001/Api/";
+var APIURL = "../../MAGAJOWebApi/Api/";
+//var APIURL = "https://localhost:44332/Api/";
 var GETID = 'Auth/GetId';
 var LOGINVIEW = 'Auth/ViewLogin';
 var LOGINPOST = 'Auth/Login';
@@ -15,9 +16,12 @@ var SETDATA = APIURL + 'Data';
 var MESSAGEERROR = 'Ocurrio un error por favor notifiquelo al administrador';
 var GETVIEWS = APIURL + "Views/{0}/view/{1}";
 var FILTROREQUIINSUMO = new Object();
+
 FILTROREQUIINSUMO.filtros = [];
 
-var APIURL
+var APIAUTH = APIURL + "Auth/";
+var APIVIEWS = APIURL + "Views/";
+var APIDATA = APIURL + 'Data/';
 
 var myMask;
 
@@ -35,7 +39,7 @@ var WIDTH = Math.max(body.scrollWidth, body.offsetWidth,
 var MAXWIDTH = (WIDTH - 100);
 
 Ext.define('MAGAJOWeb.Application', {
-    extend: 'Ext.app.Application',
+    extend: 'Ext.app.Application', 
 
     name: 'MAGAJOWeb',
 
@@ -53,9 +57,8 @@ Ext.define('MAGAJOWeb.Application', {
     currentView: null,
 
     launch: function() {
-        this.onGetIdApp();
-        /*Debe de validar si el usuario ya esta logueado*/
-        //this.onCreateHome();
+        this.onGetAppDetail();
+        this.onCreateInitial();
     },
 
     onAppUpdate: function() {
@@ -68,17 +71,30 @@ Ext.define('MAGAJOWeb.Application', {
         );
     },
 
-    onGetIdApp: function() {
+    onGetAppDetail: function() {
+
+        var pathUrl = location.href.split('/');
+        var urlApi = APIAUTH + pathUrl[pathUrl.length - 2];
 
         Ext.Ajax.request({
-            url: APIURL + GETID,
+            url: urlApi,
             async: false,
             method: 'GET',
-            params: location.href,
             success: function(response, opts) {
-                var obj = Ext.decode(response.responseText);
-                localStorage.setItem("AppID", obj.id);
-                currentThis.onGetViewLogin();
+                var obj = Ext.decode(response.responseText)[0];
+
+                if (obj.success) {
+                    localStorage.setItem("AppId", obj.appId);
+                    localStorage.setItem("AppName", obj.appName);
+                    localStorage.setItem("AppDescription", obj.appDescription);
+                    localStorage.setItem("AppPath", obj.appPath);
+                    localStorage.setItem("AppViewInitial", obj.appViewInitial);
+
+                    if (obj.appName != null)
+                        this.name = obj.appName;
+                } else {
+                    window.alert("Error");        
+                }
             },
 
             failure: function(response, opts) {
@@ -87,8 +103,15 @@ Ext.define('MAGAJOWeb.Application', {
         });
     },
 
+    onCreateInitial: function() {
+        var AppId = localStorage.getItem("AppId");
+        var AppViewInitial = localStorage.getItem("AppViewInitial");
+        var ApiUrl = APIVIEWS + AppId + "/" + AppViewInitial
+        this.onGetAjaxView(ApiUrl, 'GET', null, null);
+    },
+
     onGetViewLogin: function() {
-        var appId = localStorage.getItem("AppID");
+        var appId = localStorage.getItem("AppId");
         if (appId != '') {
             var apiUrl = APIURL + LOGINVIEW + '/' + appId;
             this.onGetAjaxView(apiUrl, 'GET', null, null);
@@ -260,12 +283,12 @@ Ext.define('MAGAJOWeb.Application', {
 
             var dataParametros = {
                 IEntityID: comp.listOfValues.entity,
-                Itoken: localStorage.getItem("UserToken"),
+                Itoken: comp.listOfValues.entity,
                 FilterData: null,
                 SortData: null,
                 QueryLimits: null,
                 ColumnData: null,
-                MGJAPP_ID: localStorage.getItem("AppID")
+                MGJAPP_ID: localStorage.getItem("AppId")
             }
 
             var store = Ext.data.StoreManager.lookup(nameStore);
@@ -279,13 +302,15 @@ Ext.define('MAGAJOWeb.Application', {
 
     /*Funcion que crea el datastore*/
     onListOfValuesAjax: function(extCmp, dataCmp, nameModel, nameStore) {
+        console.log("entra");
         var apiUrl = APIURL + DATACATALOGS;
         var apiModelUrl = APIURL + MODELCATALOGS;
         var currentContext = this;
 
         var modelParametros = {
-            MGJAPP_ID: localStorage.getItem("AppID"),
-            IEntityID: dataCmp.listOfValues.entity
+            MGJAPP_ID: localStorage.getItem("AppId"),
+            IEntityID: dataCmp.listOfValues.entity,
+            Itoken: "ASDFASDF"
         }
 
         /*Model*/
@@ -340,7 +365,7 @@ Ext.define('MAGAJOWeb.Application', {
             var pms = form.getValues();
 
             var logn = {
-                'appId': localStorage.getItem("AppID"),
+                'appId': localStorage.getItem("AppId"),
                 'userName': pms['ERPZANTELOGIN0000000000000000000000000000000000004-inputEl'],
                 'userPassword': pms['ERPZANTELOGIN0000000000000000000000000000000000005-inputEl']
             }
@@ -374,20 +399,14 @@ Ext.define('MAGAJOWeb.Application', {
         }
     },
 
-    onCreateHome: function() {
-        var appId = localStorage.getItem("AppID");
-        var apiUrl = APIURL + HOMEVIEW + '/' + appId;
-        this.onGetAjaxView(apiUrl, 'GET', null, null);
-    },
-
     onCargarVista: function(obj, parametros) {
-        var appId = localStorage.getItem("AppID");
-        var apiUrl = APIURL + 'Views/' + appId + '/view/' + parametros.Vista;
+        var appId = localStorage.getItem("AppId");
+        var apiUrl = APIURL + 'Views/' + appId + '/' + parametros.Vista;
         this.onGetAjaxView(apiUrl, 'GET', null, parametros.Container);
     },
 
     onCerrarSesion: function(obj, parametros) {
-        localStorage.setItem("AppID", null);
+        localStorage.setItem("AppId", null);
         localStorage.setItem("UserToken", null);
         localStorage.setItem("LoggedIn", false);
         this.onGetIdApp();
@@ -399,7 +418,7 @@ Ext.define('MAGAJOWeb.Application', {
         }
 
         var currentThis = this;
-        var appId = localStorage.getItem("AppID");
+        var appId = localStorage.getItem("AppId");
 
         var url = GETVIEWS.replace("{0}", appId);
         url = url.replace("{1}", parametros.Vista);
@@ -448,26 +467,42 @@ Ext.define('MAGAJOWeb.Application', {
 
     },
 
-    onGuardarEntidades: function(obj, parametros) {
-        var form = obj.ownerCt.getForm();
-        console.log(form.isValid());
-        if (form.isValid()) {
-            form.submit({
-                clientValidation: true,
-                jsonSubmit:true,
-                url: SETDATA,
-                method: 'POST',
-                waitMsg: 'Por favor espere',
-                success: function() {
-                    console.log('success');
-                }, 
-                failure: function() {
-                    console.log('failure');
-                }
+    EntidadGuarda: function(obj, parametros) {
+        if (parametros.Form != undefined && parametros.Entity != undefined) {
 
-            })
+            var appId = localStorage.getItem("AppId");
+            var apiUrl = APIDATA + appId + "/" + parametros.Entity;
+            var form = Ext.getCmp(parametros.Form);
+
+            if (form.isValid()) {
+                form.submit({
+                    clientValidation: true,
+                    jsonSubmit:true,
+                    url: apiUrl,
+                    method: 'POST',
+                    waitMsg: 'Por favor espere',
+                    success: function(response, opts) {
+                        if (parametros.Windows != undefined) {
+                            Ext.getCmp(parametros.Windows).close();
+                        } else {
+                            Ext.MessageBox.alert('Notificación', "Se registro correctamente.");
+                            form.reset();
+                        }
+                    }, 
+                    failure: function(response, opts) {
+                        console.log(opts);
+                        if (opts.result != undefined) {
+                            Ext.MessageBox.alert('Error', opts.result.message);
+                        } else {
+                            Ext.MessageBox.alert('Error', "Ocurrio un error al guardar por favor notifiquelo al administrador.");
+                        }
+                        
+                    }
+
+                })
+            }
+        } else {
+            Ext.MessageBox.alert('Error', "Existe un error en su configuración por favor notifiquelo a su administrador.");
         }
-
-        console.log(parametros);
     },
 });
